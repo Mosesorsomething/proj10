@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BFS Visualizer</title>
+<style>
+
+body{
+    font-family: Arial;
+}
+
+#grid{
+    display:grid;
+    grid-template-columns: repeat(5,60px);
+    width:300px;
+}
+
+.cell{
+    width:60px;
+    height:60px;
+    border:1px solid black;
+}
+
+.wall{
+    background:black;
+}
+
+.path{
+    background:limegreen;
+}
+
+.start{
+    background:blue;
+}
+
+.goal{
+    background:red;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>BFS Path Visualization</h2>
+
+<div id="grid"></div>
+
+<button onclick="drawPath()">Show Path</button>
+
+<script src="script.js"></script>
+
+</body>
+</html>
