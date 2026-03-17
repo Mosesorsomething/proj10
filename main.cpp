@@ -45,6 +45,28 @@ vector<int> BFS(vector<P> points, vector<bool> adj , int root, int goal) { // Br
 	return parent; // compiler stop crying
 }
 
+template <typename P, auto log>
+vector<int> Dijkstra(vector<P> points, vector<bool> adj, int root, int goal) { // Dijkstra’s algorithm
+	const int n = points.size();
+	vector<bool> explored(n,false);
+	vector<int> distance(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
+	vector<int> parent(n, -1); // -1 means no parent
+	for (int i=0;i<n;i++) Q.push(i); // consider all points
+	distance[root] = 0;
+	while (!Q.empty()) {
+		int p1 = 0;
+		for (int i=0;i<n;i++) // find min unexplored point
+			if (!explored[i] && distance[p1] > distance[i])
+				p1 = i;
+		explored[p1] = true;
+		log(points[p1]);
+		for (int i=0;in;i++) {
+			ndist = 0; // TODO continue here
+		}
+
+    }
+}
+
 int main() {
 	json j_arr;
 	// input
