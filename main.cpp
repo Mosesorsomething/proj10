@@ -46,25 +46,30 @@ vector<int> BFS(vector<P> points, vector<bool> adj , int root, int goal) { // Br
 }
 
 template <typename P, auto log>
-vector<int> Dijkstra(vector<P> points, vector<bool> adj, int root, int goal) { // Dijkstra’s algorithm
+pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj, int root, int goal) { // Dijkstra’s algorithm
 	const int n = points.size();
-	vector<bool> explored(n,false);
+	vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
 	vector<int> distance(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> parent(n, -1); // -1 means no parent
-	for (int i=0;i<n;i++) Q.push(i); // consider all points
+	// for (int i=0;i<n;i++) explored[i] =; // consider all points
 	distance[root] = 0;
-	while (!Q.empty()) {
+	while (!reduce(explored.begin(), explored.end(), true, logical_and<>())) {
 		int p1 = 0;
-		for (int i=0;i<n;i++) // find min unexplored point
+		for (int i=0;i<n;i++) // find min unexplored point, this forces to break the queue rules, since we need to peek at every element without popping, maybe use another temp queue, or bool vector?
 			if (!explored[i] && distance[p1] > distance[i])
 				p1 = i;
 		explored[p1] = true;
 		log(points[p1]);
-		for (int i=0;in;i++) {
-			ndist = 0; // TODO continue here
+		for (int p2=0;p2<n;p2++) if (adj[p1*n+p2]!=0) {
+			int ndist = distance[p1] == INT_MAX? INT_MAX: distance[p1] + adj[p1*n+p2]; // distance is always one in our case, but we still query adj just in case we need to switch from bool to int
+			if (ndist < distance[p2]) {
+				distance[p2] = ndist;
+				parent[p2] = p1;
+				if (p2 == goal) return {parent, distance};
+			}
 		}
-
-    }
+	}
+	return {parent, distance};
 }
 
 int main() {
@@ -131,6 +136,20 @@ int main() {
 	}
 	ofstream file("bfs.json");
 	file << j_arr.dump(1);
+
+	vector<int> Dparent, Ddistance;
+	tie(Dparent,Ddistance) = Dijkstra<Point, [](Point p){cout << p.x << " " << p.y << " visited!" << endl;}>(points, adj, r, g);
+	
+	// print path
+	cout << "Path:";
+	vector<int> S{};
+	for (int u = g; Dparent[u] != -1; u=Dparent[u]) S.push_back(u);
+	S.push_back(r);
+	for (int u : S) {
+		Point p = points[u];
+		cout << " ("<< p.x << "," << p.y << ")";
+	}
+	cout << endl;
 }
 
 
