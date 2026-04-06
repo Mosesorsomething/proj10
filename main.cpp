@@ -136,10 +136,13 @@ int main() {
 	}
 	ofstream file("bfs.json");
 	file << j_arr.dump(1);
+	file.close();
 
+	j_arr.clear();
 	vector<int> Dparent, Ddistance;
 	tie(Dparent,Ddistance) = Dijkstra<Point, [](Point p){cout << p.x << " " << p.y << " visited!" << endl;}>(points, adj, r, g);
-	
+	j_arr["parent"] = Dparent; // store parent array into JSON file
+	j_arr["distance"] = Ddistance; // store distance array into JSON file, INT_MAX is infinity unfortunately
 	// print path
 	cout << "Path:";
 	vector<int> S{};
@@ -148,8 +151,15 @@ int main() {
 	for (int u : S) {
 		Point p = points[u];
 		cout << " ("<< p.x << "," << p.y << ")";
+		j_arr["path"].push_back({p.x,p.y});
 	}
 	cout << endl;
+	j_arr["arr"] = A;
+	j_arr["root"] = {root.x,root.y};
+	j_arr["goal"] = {goal.x,goal.y};
+	file.open("dijkstra.json");
+	file << j_arr.dump(1);
+	file.close();
 }
 
 
