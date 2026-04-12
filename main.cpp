@@ -17,16 +17,16 @@ int nodecount(T *A, int size) {
 	for (int i = 0;i<size;i++) c+=A[i];
 	return size-c;
 }
+template<typename P>
 
-template<typename P, auto log>
-vector<int> BFS(vector<P> points, vector<bool> adj , int root, int goal) { // Breadth-First Search
+vector<int> BFS(vector<P>& points, vector<bool>& adj , int root, int goal, auto visit) { // Breadth-First Search
 	const int n = points.size();
 	queue<int> Q;
 	vector<bool> explored(n,false);
 	vector<int> parent(n,-1);
 
 	explored[root] = true;
-	log(points[root]);
+	visit(points[root]);
 	Q.push(root);
 	while (!Q.empty()) {
 		int v = Q.front();
@@ -35,7 +35,9 @@ vector<int> BFS(vector<P> points, vector<bool> adj , int root, int goal) { // Br
 		for (int w=0;w<n;w++) if (adj[n*v+w]) { //shortest path?
 			if (!explored[w]) {
 				explored[w] = true;
-				log(points[w]);
+				// GET THE POINTS HERE
+
+				visit(points[w]);
 				parent[w] = v;
 				Q.push(w);
 			}
@@ -76,15 +78,16 @@ int main() {
 	json j_arr;
 	// input
 	bool A[5][5]{
-		1,1,1,1,1,
-		1,0,0,0,1,
-		1,1,0,1,1,
-		1,0,0,1,1,
+		0,1,1,0,0,
+		0,1,0,0,0,
+		0,1,0,1,1,
+		0,0,0,0,1,
 		1,1,1,1,1,
 		};
+	// 0 = Walkable, 1 = Wall
 	j_arr["arr"] = A;
-	Point root{2,2};
-	Point goal{1,3};
+	Point root{0,0};
+	Point goal{0,4};
 	j_arr["root"] = {root.x,root.y};
 	j_arr["goal"] = {goal.x,goal.y};
 
@@ -108,9 +111,13 @@ int main() {
 			adj.push_back(1==(abs(p1.x-p2.x) + abs(p1.y-p2.y)));
 	}
 	// use points,r,g,adj
+	vector<Point> visited{};
+	vector<int> BFSparent = BFS<Point>(points, adj, r, g, [&visited](Point p){cout << p.x << " " << p.y << " visited!" << endl;visited.push_back(p);});
 
-	vector<int> BFSparent = BFS<Point, [](Point p){cout << p.x << " " << p.y << " visited!" << endl;}>(points, adj, r, g);
-	j_arr["parent"] = BFSparent; //store parent array into JSON file.
+	 //store parent array into JSON file.
+	for (const Point& p : visited) {
+		j_arr["visited"].push_back({p.x, p.y});
+	}
 	vector<int> revpath(1,g); // create reverse path
 	{
 		int current = g;
@@ -138,28 +145,28 @@ int main() {
 	file << j_arr.dump(1);
 	file.close();
 
-	j_arr.clear();
-	vector<int> Dparent, Ddistance;
-	tie(Dparent,Ddistance) = Dijkstra<Point, [](Point p){cout << p.x << " " << p.y << " visited!" << endl;}>(points, adj, r, g);
-	j_arr["parent"] = Dparent; // store parent array into JSON file
-	j_arr["distance"] = Ddistance; // store distance array into JSON file, INT_MAX is infinity unfortunately
-	// print path
-	cout << "Path:";
-	vector<int> S{};
-	for (int u = g; Dparent[u] != -1; u=Dparent[u]) S.push_back(u);
-	S.push_back(r);
-	for (int u : S) {
-		Point p = points[u];
-		cout << " ("<< p.x << "," << p.y << ")";
-		j_arr["path"].push_back({p.x,p.y});
-	}
-	cout << endl;
-	j_arr["arr"] = A;
-	j_arr["root"] = {root.x,root.y};
-	j_arr["goal"] = {goal.x,goal.y};
-	file.open("dijkstra.json");
-	file << j_arr.dump(1);
-	file.close();
+	// j_arr.clear();
+	// vector<int> Dparent, Ddistance;
+	// tie(Dparent,Ddistance) = Dijkstra<Point, [](Point p){cout << p.x << " " << p.y << " visited!" << endl;}>(points, adj, r, g);
+	// j_arr["parent"] = Dparent; // store parent array into JSON file
+	// j_arr["distance"] = Ddistance; // store distance array into JSON file, INT_MAX is infinity unfortunately
+	// // print path
+	// cout << "Path:";
+	// vector<int> S{};
+	// for (int u = g; Dparent[u] != -1; u=Dparent[u]) S.push_back(u);
+	// S.push_back(r);
+	// for (int u : S) {
+	// 	Point p = points[u];
+	// 	cout << " ("<< p.x << "," << p.y << ")";
+	// 	j_arr["path"].push_back({p.x,p.y});
+	// }
+	// cout << endl;
+	// j_arr["arr"] = A;
+	// j_arr["root"] = {root.x,root.y};
+	// j_arr["goal"] = {goal.x,goal.y};
+	// file.open("dijkstra.json");
+	// file << j_arr.dump(1);
+	// file.close();
 }
 
 
