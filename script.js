@@ -29,13 +29,13 @@ fetch("bfs.json")
     // yup
     window.drawPath = function()
     {
-        data.visited.forEach((p,i)=>{
+        data.log.forEach((p,i)=>{
             setTimeout(()=>{
-                const cell = document.getElementById("c-"+p[0]+"-"+p[1])
+                const cell = document.getElementById("c-"+p.x+"-"+p.y)
                 cell.classList.add("discover")
             },i*400)
         })
-        const totalTime = data.visited.length * 400; //wait until path is finished
+        const totalTime = data.log.length * 400; //wait until path is finished
             data.path.forEach((p,i)=>{
             setTimeout(()=>{
             const cell = document.getElementById("c-"+p[0]+"-"+p[1])
