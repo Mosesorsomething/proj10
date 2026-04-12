@@ -11,22 +11,29 @@ using json = nlohmann::json;
 struct Point {
 	int x, y;
 };
+void to_json(nlohmann::json& j, const Point& p) {
+	j = json{{"x", p.x}, {"y", p.y}};
+}
+void from_json(const nlohmann::json& j, Point& p) {
+	j.at("x").get_to(p.x);
+	j.at("y").get_to(p.y);
+}
 template<typename T>
 int nodecount(T *A, int size) {
 	int c=0;
 	for (int i = 0;i<size;i++) c+=A[i];
 	return size-c;
 }
-template<typename P>
 
-vector<int> BFS(vector<P>& points, vector<bool>& adj , int root, int goal, auto visit) { // Breadth-First Search
+template<typename P, typename logger>
+vector<int> BFS(vector<P> points, vector<bool> adj , int root, int goal, logger log) { // Breadth-First Search
 	const int n = points.size();
 	queue<int> Q;
 	vector<bool> explored(n,false);
 	vector<int> parent(n,-1);
 
 	explored[root] = true;
-	visit(points[root]);
+	log(points[root]);
 	Q.push(root);
 	while (!Q.empty()) {
 		int v = Q.front();
@@ -35,9 +42,7 @@ vector<int> BFS(vector<P>& points, vector<bool>& adj , int root, int goal, auto 
 		for (int w=0;w<n;w++) if (adj[n*v+w]) { //shortest path?
 			if (!explored[w]) {
 				explored[w] = true;
-				// GET THE POINTS HERE
-
-				visit(points[w]);
+				log(points[w]);
 				parent[w] = v;
 				Q.push(w);
 			}
@@ -47,8 +52,8 @@ vector<int> BFS(vector<P>& points, vector<bool>& adj , int root, int goal, auto 
 	return parent; // compiler stop crying
 }
 
-template <typename P, auto log>
-pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj, int root, int goal) { // Dijkstra’s algorithm
+template <typename P,typename logger>
+pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj , int root, int goal, logger log) { // Dijkstra’s algorithm
 	const int n = points.size();
 	vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
 	vector<int> distance(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
@@ -78,16 +83,15 @@ int main() {
 	json j_arr;
 	// input
 	bool A[5][5]{
-		0,1,1,0,0,
-		0,1,0,0,0,
-		0,1,0,1,1,
-		0,0,0,0,1,
+		1,1,1,1,1,
+		1,0,0,0,1,
+		1,1,0,1,1,
+		1,0,0,1,1,
 		1,1,1,1,1,
 		};
-	// 0 = Walkable, 1 = Wall
 	j_arr["arr"] = A;
-	Point root{0,0};
-	Point goal{0,4};
+	Point root{2,2};
+	Point goal{1,3};
 	j_arr["root"] = {root.x,root.y};
 	j_arr["goal"] = {goal.x,goal.y};
 
@@ -112,12 +116,9 @@ int main() {
 	}
 	// use points,r,g,adj
 	vector<Point> visited{};
-	vector<int> BFSparent = BFS<Point>(points, adj, r, g, [&visited](Point p){cout << p.x << " " << p.y << " visited!" << endl;visited.push_back(p);});
-
-	 //store parent array into JSON file.
-	for (const Point& p : visited) {
-		j_arr["visited"].push_back({p.x, p.y});
-	}
+	vector<int> BFSparent = BFS(points, adj, r, g, [&visited](Point p) {cout << p.x << " " << p.y << " visited!" << endl;visited.push_back(p);});
+	j_arr["parent"] = BFSparent; //store parent array into JSON file.
+	j_arr["log"] = visited;
 	vector<int> revpath(1,g); // create reverse path
 	{
 		int current = g;
@@ -145,44 +146,27 @@ int main() {
 	file << j_arr.dump(1);
 	file.close();
 
-	// j_arr.clear();
-	// vector<int> Dparent, Ddistance;
-	// tie(Dparent,Ddistance) = Dijkstra<Point, [](Point p){cout << p.x << " " << p.y << " visited!" << endl;}>(points, adj, r, g);
-	// j_arr["parent"] = Dparent; // store parent array into JSON file
-	// j_arr["distance"] = Ddistance; // store distance array into JSON file, INT_MAX is infinity unfortunately
-	// // print path
-	// cout << "Path:";
-	// vector<int> S{};
-	// for (int u = g; Dparent[u] != -1; u=Dparent[u]) S.push_back(u);
-	// S.push_back(r);
-	// for (int u : S) {
-	// 	Point p = points[u];
-	// 	cout << " ("<< p.x << "," << p.y << ")";
-	// 	j_arr["path"].push_back({p.x,p.y});
-	// }
-	// cout << endl;
-	// j_arr["arr"] = A;
-	// j_arr["root"] = {root.x,root.y};
-	// j_arr["goal"] = {goal.x,goal.y};
-	// file.open("dijkstra.json");
-	// file << j_arr.dump(1);
-	// file.close();
+	j_arr.clear(); visited.clear();
+	vector<int> Dparent, Ddistance;
+	tie(Dparent,Ddistance) = Dijkstra(points, adj, r, g, [&visited](Point p) {cout << p.x << " " << p.y << " visited!" << endl;visited.push_back(p);});
+	j_arr["parent"] = Dparent; // store parent array into JSON file
+	j_arr["distance"] = Ddistance; // store distance array into JSON file, INT_MAX is infinity unfortunately
+	j_arr["log"] = visited;
+	// print path
+	cout << "Path:";
+	vector<int> S{};
+	for (int u = g; Dparent[u] != -1; u=Dparent[u]) S.push_back(u);
+	S.push_back(r);
+	for (int u : S) {
+		Point p = points[u];
+		cout << " ("<< p.x << "," << p.y << ")";
+		j_arr["path"].push_back({p.x,p.y});
+	}
+	cout << endl;
+	j_arr["arr"] = A;
+	j_arr["root"] = {root.x,root.y};
+	j_arr["goal"] = {goal.x,goal.y};
+	file.open("dijkstra.json");
+	file << j_arr.dump(1);
+	file.close();
 }
-
-
-// 10. Multi-Algorithm Pathfinding Visualizer (Graphs + DP/Greedy)
-// **Level**: Advanced
-// **Main topics**: Graph algorithms, greedy vs DP flavor, runtime analysis, algorithmic comparison
-// **Formal project statement**
-// Create a **pathfinding visualizer** on a 2D grid or maze that allows users to compare different pathfinding algorithms. The grid has:
-//     - Free cells
-//     - Blocked cells (obstacles)
-//     - A start cell and a goal cell
-// You must:
-//     - Represent the grid as a graph (implicit or explicit adjacency).
-//     - Implement at least **three pathfinding algorithms**, e.g.:
-//         - Breadth-First Search (BFS) for unweighted shortest paths
-//         - Dijkstra’s algorithm for weighted paths
-//         - A* search with an admissible heuristic (e.g. Manhattan distance)
-//     - Visually (or textually) show the **order in which cells are visited** and the final path.
-//     - Compare their **theoretical time complexity** and **empirical performance** (nodes expanded, runtime) on different map types.
