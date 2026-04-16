@@ -10,6 +10,7 @@ using json = nlohmann::json;
 
 struct Point {
 	int x, y;
+    Point operator-(const Point &other) {return {x-other.x,y-other.y};};
 };
 void to_json(nlohmann::json& j, const Point& p) {
 	j = json{{"x", p.x}, {"y", p.y}};
@@ -25,8 +26,9 @@ int nodecount(T *A, int size) {
 	return size-c;
 }
 
+// P is a point or proxy for the actual node representation, we use ints interally to index into points
 template<typename P, typename logger>
-vector<int> BFS(vector<P> points, vector<bool> adj , int root, int goal, logger log) { // Breadth-First Search
+vector<int> BFS(vector<P> points, vector<bool> adj, int root, int goal, logger log) { // Breadth-First Search
 	const int n = points.size();
 	queue<int> Q;
 	vector<bool> explored(n,false);
@@ -77,6 +79,39 @@ pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj , int 
 		}
 	}
 	return {parent, distance};
+}
+
+template <typename P>
+auto manhattan_distance(P a, P b) {P r =(b-a); return abs(r.x)+abs(r.y);}
+
+template <typename P, typename logger>
+tuple<vector<int>,vector<int>,vector<int>> AStar(vector<P> points, vector<bool> adj, int root, int goal, logger log) {
+	const int n = points.size();
+	vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
+	vector<int> gdist(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
+	vector<int> fdist(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
+	vector<int> parent(n, -1); // -1 means no parent
+	gdist[root] = 0;
+    fdist[root] = manhattan_distance(points[root], points[goal]);
+	while (!reduce(explored.begin(), explored.end(), true, logical_and<>())) { // while not empty
+		int p1 = 0;
+		for (int i=0;i<n;i++) // find min unexplored point
+			if (!explored[i] && fdist[p1] > fdist[i])
+				p1 = i;
+		if (p1 == goal) return {parent, gdist, fdist};
+		explored[p1] = true;
+		log(points[p1]);
+		for (int p2=0;p2<n;p2++) if (adj[p1*n+p2]!=0) {
+			int ndist = gdist[p1] == INT_MAX? INT_MAX: gdist[p1] + adj[p1*n+p2];
+			if (ndist < gdist[p2]) {
+				parent[p2] = p1;
+				gdist[p2] = ndist;
+				fdist[p2] = ndist + manhattan_distance(points[p2],points[goal]);
+				explored[p2] = false; // if not in the set, add it
+			}
+		}
+	}
+    return {parent, gdist, fdist};
 }
 
 int main() {
@@ -169,4 +204,30 @@ int main() {
 	file.open("dijkstra.json");
 	file << j_arr.dump(1);
 	file.close();
+
+    j_arr.clear(); visited.clear();
+	vector<int> Aparent, Agdist, Afdist;
+	tie(Aparent,Agdist,Afdist) = AStar(points, adj, r, g, [&visited](Point p) {cout << p.x << " " << p.y << " visited!" << endl;visited.push_back(p);});
+	j_arr["parent"] = Aparent; // store parent array into JSON file
+	j_arr["gdistance"] = Agdist; // store distance array into JSON file, INT_MAX is infinity unfortunately
+	j_arr["fdistance"] = Afdist; // store distance array into JSON file, INT_MAX is infinity unfortunately
+	j_arr["log"] = visited;
+	// print path
+	cout << "Path:";
+	S.clear();
+	for (int u = g; Aparent[u] != -1; u=Aparent[u]) S.push_back(u);
+	S.push_back(r);
+	for (int u : S) {
+		Point p = points[u];
+		cout << " ("<< p.x << "," << p.y << ")";
+		j_arr["path"].push_back({p.x,p.y});
+	}
+	cout << endl;
+	j_arr["arr"] = A;
+	j_arr["root"] = {root.x,root.y};
+	j_arr["goal"] = {goal.x,goal.y};
+	file.open("astar.json");
+	file << j_arr.dump(1);
+	file.close();
+
 }
