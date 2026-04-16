@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include <fstream>
 #include <queue>
+#include <ranges>
 #include <vector>
 using namespace std;
 
@@ -164,8 +165,8 @@ int main() {
 	}
 	// print path
 	cout << "Path:";
-	for (int i=revpath.size()-1;i>=0;i--) {
-		Point p = points[revpath[i]];
+	for (int u : revpath | views::reverse) {
+		Point p = points[u];
 		cout << " ("<< p.x << "," << p.y << ")";
 		j_arr["path"].push_back({p.x,p.y});
 	}
@@ -192,7 +193,7 @@ int main() {
 	vector<int> S{};
 	for (int u = g; Dparent[u] != -1; u=Dparent[u]) S.push_back(u);
 	S.push_back(r);
-	for (int u : S) {
+	for (int u : S | views::reverse) {
 		Point p = points[u];
 		cout << " ("<< p.x << "," << p.y << ")";
 		j_arr["path"].push_back({p.x,p.y});
@@ -217,7 +218,7 @@ int main() {
 	S.clear();
 	for (int u = g; Aparent[u] != -1; u=Aparent[u]) S.push_back(u);
 	S.push_back(r);
-	for (int u : S) {
+	for (int u : S | views::reverse) {
 		Point p = points[u];
 		cout << " ("<< p.x << "," << p.y << ")";
 		j_arr["path"].push_back({p.x,p.y});
