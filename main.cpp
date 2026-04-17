@@ -1,17 +1,17 @@
-#include <functional>
 #include <iostream>
 #include "json.hpp"
 #include <fstream>
 #include <queue>
 #include <ranges>
 #include <vector>
+#include "heap.cpp"
 using namespace std;
 
 using json = nlohmann::json;
 
 struct Point {
 	int x, y;
-    Point operator-(const Point &other) {return {x-other.x,y-other.y};};
+	Point operator-(const Point &other) {return {x-other.x,y-other.y};};
 };
 void to_json(nlohmann::json& j, const Point& p) {
 	j = json{{"x", p.x}, {"y", p.y}};
@@ -58,17 +58,18 @@ vector<int> BFS(vector<P> points, vector<bool> adj, int root, int goal, logger l
 template <typename P,typename logger>
 pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj , int root, int goal, logger log) { // Dijkstra’s algorithm
 	const int n = points.size();
-	vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
+	using PQ = MinHeap<pair<int,int>>; // priority queue functions
+	vector<pair<int,int>> Q{}; // priority queue
+	// we're using pair<distance,point> since it works like APL total array ordering, i.e. first compare distance (what we want) and then compare vector (doesn't matter)
+	// vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
 	vector<int> distance(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> parent(n, -1); // -1 means no parent
 	// for (int i=0;i<n;i++) explored[i] =; // consider all points
 	distance[root] = 0;
-	while (!reduce(explored.begin(), explored.end(), true, logical_and<>())) {
-		int p1 = 0;
-		for (int i=0;i<n;i++) // find min unexplored point, this forces to break the queue rules, since we need to peek at every element without popping, maybe use another temp queue, or bool vector?
-			if (!explored[i] && distance[p1] > distance[i])
-				p1 = i;
-		explored[p1] = true;
+	PQ::insert(Q,{0,root});
+	for (int i=0;i<n;i++) if (i!=root) PQ::insert(Q,{INT_MAX,i}); // insert all other nodes with matching distances
+	while (!Q.empty()) {
+		int p1 = PQ::extract(Q).second;
 		log(points[p1]);
 		for (int p2=0;p2<n;p2++) if (adj[p1*n+p2]!=0) {
 			int ndist = distance[p1] == INT_MAX? INT_MAX: distance[p1] + adj[p1*n+p2]; // distance is always one in our case, but we still query adj just in case we need to switch from bool to int
@@ -88,27 +89,29 @@ auto manhattan_distance(P a, P b) {P r =(b-a); return abs(r.x)+abs(r.y);}
 template <typename P, typename logger>
 tuple<vector<int>,vector<int>,vector<int>> AStar(vector<P> points, vector<bool> adj, int root, int goal, logger log) {
 	const int n = points.size();
-	vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
+	using PQ = MinHeap<pair<int,int>>; // priority queue functions
+	vector<pair<int,int>> Q{}; // priority queue
+	// we're using pair<distance,point> since it works like APL total array ordering, i.e. first compare distance (what we want) and then compare vector (doesn't matter)
+	// vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
 	vector<int> gdist(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> fdist(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> parent(n, -1); // -1 means no parent
 	gdist[root] = 0;
-    fdist[root] = manhattan_distance(points[root], points[goal]);
-	while (!reduce(explored.begin(), explored.end(), true, logical_and<>())) { // while not empty
-		int p1 = 0;
-		for (int i=0;i<n;i++) // find min unexplored point
-			if (!explored[i] && fdist[p1] > fdist[i])
-				p1 = i;
+	fdist[root] = manhattan_distance(points[root], points[goal]);
+	PQ::insert(Q,{fdist[root],root}); // should sync with fdist now
+	for (int i=0;i<n;i++) if (i!=root) PQ::insert(Q,{INT_MAX,i}); // insert all other nodes with matching distances
+	while (!Q.empty()) { // while not empty
+		int p1 = PQ::extract(Q).second;
 		if (p1 == goal) return {parent, gdist, fdist};
-		explored[p1] = true;
 		log(points[p1]);
+
 		for (int p2=0;p2<n;p2++) if (adj[p1*n+p2]!=0) {
 			int ndist = gdist[p1] == INT_MAX? INT_MAX: gdist[p1] + adj[p1*n+p2];
 			if (ndist < gdist[p2]) {
 				parent[p2] = p1;
 				gdist[p2] = ndist;
 				fdist[p2] = ndist + manhattan_distance(points[p2],points[goal]);
-				explored[p2] = false; // if not in the set, add it
+				PQ::insert(Q,{fdist[p2],p2}); // if not in the set, add it
 			}
 		}
 	}
@@ -206,7 +209,7 @@ int main() {
 	file << j_arr.dump(1);
 	file.close();
 
-    j_arr.clear(); visited.clear();
+	j_arr.clear(); visited.clear();
 	vector<int> Aparent, Agdist, Afdist;
 	tie(Aparent,Agdist,Afdist) = AStar(points, adj, r, g, [&visited](Point p) {cout << p.x << " " << p.y << " visited!" << endl;visited.push_back(p);});
 	j_arr["parent"] = Aparent; // store parent array into JSON file
