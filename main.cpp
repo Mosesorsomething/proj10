@@ -61,10 +61,8 @@ pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj , int 
 	using PQ = MinHeap<pair<int,int>>; // priority queue functions
 	vector<pair<int,int>> Q{}; // priority queue
 	// we're using pair<distance,point> since it works like APL total array ordering, i.e. first compare distance (what we want) and then compare vector (doesn't matter)
-	// vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
 	vector<int> distance(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> parent(n, -1); // -1 means no parent
-	// for (int i=0;i<n;i++) explored[i] =; // consider all points
 	distance[root] = 0;
 	PQ::insert(Q,{0,root});
 	for (int i=0;i<n;i++) if (i!=root) PQ::insert(Q,{INT_MAX,i}); // insert all other nodes with matching distances
@@ -92,7 +90,6 @@ tuple<vector<int>,vector<int>,vector<int>> AStar(vector<P> points, vector<bool> 
 	using PQ = MinHeap<pair<int,int>>; // priority queue functions
 	vector<pair<int,int>> Q{}; // priority queue
 	// we're using pair<distance,point> since it works like APL total array ordering, i.e. first compare distance (what we want) and then compare vector (doesn't matter)
-	// vector<bool> explored(n,false); // consider all points, still debating whether queue or bool vector
 	vector<int> gdist(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> fdist(n, INT_MAX); // pretend INT_MAX is infinity bc we're using ints
 	vector<int> parent(n, -1); // -1 means no parent
