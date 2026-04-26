@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>BFS Visualizer</title>
+<title>Path Visualizers</title>
 <style>
 
 body{
     font-family: Helvetica;
 }
 
-#grid{
+#grid, #grid-bfs, #grid-dijkstra, #grid-astar{
     display:grid;
     grid-template-columns: repeat(5,60px);
     width:300px;
@@ -38,19 +38,65 @@ body{
 .goal{
     background:red;
 }
-
+#bfs
+{
+    padding:4px;
+    display: flex;
+}
+.randomdiv
+{
+    margin-left:10px;
+    margin-top: 120px;
+}
+#randomdiv2
+{
+    gap:100px;
+}
+#dijkstra
+{
+    padding:4px;
+    display: flex;
+    margin-top:120px;
+}
+#astar
+{
+    padding:4px;
+    display: flex;
+    margin-top:120px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>BFS Path Visualization</h2>
-
-<div id="grid"></div>
-
-<button onclick="drawPath()">Show Path</button>
-
-<script src="script.js"></script>
-
+<h2>Path Visualization</h2>
+<div id="bfs">
+    <div id="grid-bfs"></div>
+    <script src="script.js"></script>
+    <button onclick="drawPath()">Show Path</button>
+    <button onclick="resetPath()">Reset</button>
+    <div class="randomdiv">
+        <h1>Breadth First Search</h1>
+    </div>
+</div>
+<div id="randomdiv2"></div>
+<div id="dijkstra">
+    <div id="grid-dijkstra"></div>
+    <script src="scriptDJ.js"></script>
+    <button onclick="drawPathp()">Show Path</button>
+    <button onclick="resetPathp()">Reset</button>
+    <div class="randomdiv">
+        <h1>Dijkstra</h1>
+    </div>
+</div>
+<div id="astar">
+    <div id="grid-astar"></div>
+    <script src="scriptAstar.js"></script>
+    <button onclick="drawPatha()">Show Path</button>
+    <button onclick="resetPatha()">Reset</button>
+    <div class="randomdiv">
+        <h1>A* Search</h1>
+    </div>
+</div>
 </body>
 </html>
