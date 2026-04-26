@@ -1,3 +1,5 @@
+#include <compare>
+#include <functional>
 #include <limits>
 #include <vector>
 #include <cassert>
@@ -48,6 +50,17 @@ public:
 		A.pop_back();
 		heapify(A, 0);
 		return val;
+	}
+
+	static int find(vector<T> &A, T key) {
+		const int n = A.size();
+		int i = 0;
+		while (i<n) switch (A[i]<=>key) {
+				case strong_ordering::equal	: return i	;break;
+				case strong_ordering::less	: i=right(i)	;break;
+				case strong_ordering::greater	: i=left(i)	;break;
+		}
+		return -1;
 	}
 };
 

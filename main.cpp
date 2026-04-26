@@ -108,7 +108,7 @@ tuple<vector<int>,vector<int>,vector<int>> AStar(vector<P> points, vector<bool> 
 				parent[p2] = p1;
 				gdist[p2] = ndist;
 				fdist[p2] = ndist + manhattan_distance(points[p2],points[goal]);
-				PQ::insert(Q,{fdist[p2],p2}); // if not in the set, add it
+				if (PQ::find(Q, {fdist[p2],p2})==-1) PQ::insert(Q,{fdist[p2],p2}); // if not in the set, add it
 			}
 		}
 	}
