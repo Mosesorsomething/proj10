@@ -67,13 +67,14 @@ pair<vector<int>,vector<int>> Dijkstra(vector<P> points, vector<bool> adj , int 
 	PQ::insert(Q,{0,root});
 	for (int i=0;i<n;i++) if (i!=root) PQ::insert(Q,{INT_MAX,i}); // insert all other nodes with matching distances
 	while (!Q.empty()) {
-		int p1 = PQ::extract(Q).second;
+		auto [dist, p1] = PQ::extract(Q);
 		log(points[p1]);
 		for (int p2=0;p2<n;p2++) if (adj[p1*n+p2]!=0) {
 			int ndist = distance[p1] == INT_MAX? INT_MAX: distance[p1] + adj[p1*n+p2]; // distance is always one in our case, but we still query adj just in case we need to switch from bool to int
 			if (ndist < distance[p2]) {
 				distance[p2] = ndist;
 				parent[p2] = p1;
+				PQ::insert(Q,{ndist,p2}); // re-insert with updated distance
 				if (p2 == goal) return {parent, distance};
 			}
 		}
@@ -119,15 +120,15 @@ int main() {
 	json j_arr;
 	// input
 	bool A[5][5]{
-		1,1,1,1,1,
+		0,1,1,0,1,
+		0,0,0,0,1,
+		1,1,0,0,0,
 		1,0,0,0,1,
-		1,1,0,1,1,
-		1,0,0,1,1,
-		1,1,1,1,1,
+		1,1,1,0,0,
 		};
 	j_arr["arr"] = A;
-	Point root{2,2};
-	Point goal{1,3};
+	Point root{0,0};
+	Point goal{3,1};
 	j_arr["root"] = {root.x,root.y};
 	j_arr["goal"] = {goal.x,goal.y};
 

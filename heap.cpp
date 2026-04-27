@@ -1,8 +1,8 @@
-#include <compare>
 #include <functional>
 #include <limits>
 #include <vector>
 #include <cassert>
+#include <compare>
 
 using namespace std;
 
@@ -44,7 +44,7 @@ public:
 			heapify(A,i);
 	}
 	static T& top(vector<T> &A) {return A[0];} // peek at min or max
-	static T extract(vector<T> &A) { // min or max depending on Compare
+	static T extract(vector<T> &A) { // min or max depending on compare
 		T val = A[0];
 		A[0] = A.back();
 		A.pop_back();
@@ -53,14 +53,18 @@ public:
 	}
 
 	static int find(vector<T> &A, T key) {
-		const int n = A.size();
-		int i = 0;
-		while (i<n) switch (A[i]<=>key) {
-				case strong_ordering::equal	: return i	;break;
-				case strong_ordering::less	: i=right(i)	;break;
-				case strong_ordering::greater	: i=left(i)	;break;
-		}
-		return -1;
+    const int n = A.size();
+    int i = 0;
+	while (i < n) {
+        auto cmp = A[i] <=> key; // converted into standard if/else because compiler was crying
+        if (cmp == 0)
+            return i;
+        else if (cmp < 0)
+            i = right(i);
+        else
+            i = left(i);
+    }
+    return -1;
 	}
 };
 
